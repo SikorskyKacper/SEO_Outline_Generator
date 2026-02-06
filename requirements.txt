@@ -1,0 +1,10 @@
+streamlit
+crawl4ai
+google-generativeai
+openai
+openpyxl
+pydantic
+rank_bm25
+python-dotenv
+pandas
+beautifulsoup4
