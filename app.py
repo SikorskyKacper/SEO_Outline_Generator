@@ -52,7 +52,7 @@ if provider == "Gemini":
     model_name = st.sidebar.text_input("Model Name", value="gemini-2.0-flash-lite-preview-02-05")
 elif provider == "OpenRouter":
     api_key = st.sidebar.text_input("OpenRouter API Key", value="", type="password")
-    model_name = st.sidebar.text_input("Model Name", value="google/gemini-2.0-flash-lite-preview-02-05:free")
+    model_name = st.sidebar.text_input("Model Name", value="google/gemini-2.5-flash-lite")
 
 if provider != "Local" and not api_key:
     st.sidebar.warning(f"Please enter API Key for {provider} to use LLM features.")
@@ -222,3 +222,4 @@ async def main_process():
 
 if generate_btn:
     asyncio.run(main_process())
+
