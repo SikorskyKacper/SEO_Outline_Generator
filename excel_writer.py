@@ -57,7 +57,7 @@ def write_to_excel(
 
     current_row = start_row
     
-    for item in outline.items:
+    for item in outline.outline:
         # --- Header Row ---
         # Apply style
         for col in ["E", "F"]:
@@ -80,7 +80,7 @@ def write_to_excel(
 
         current_row += 1
 
-        # --- Brief Row ---
+        # --- Content Row ---
         # Apply style
         for col in ["E", "F"]:
             target = ws[f"{col}{current_row}"]
@@ -95,14 +95,13 @@ def write_to_excel(
             
         # Set values
         ws[f"E{current_row}"] = "Treść do nagłówka"
-        brief_text = "\n".join([f"- {point}" for point in item.brief])
-        ws[f"F{current_row}"] = brief_text
+        ws[f"F{current_row}"] = item.content
         
         # Ensure wrap text
         ws[f"F{current_row}"].alignment = Alignment(wrap_text=True, vertical='top')
         
-        # Adjust height (rough estimation: 15px per line)
-        line_count = len(item.brief) + 1
+        # Adjust height
+        line_count = len(item.content.splitlines()) + 1
         ws.row_dimensions[current_row].height = max(15 * line_count, ws.row_dimensions[8].height or 15)
 
         current_row += 1
