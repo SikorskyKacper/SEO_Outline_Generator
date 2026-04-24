@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import asyncio
 import os
-from utils import setup_logging, ensure_directories
+from app_utils import setup_logging, ensure_directories
 from crawler import crawl_urls
 from outline_builder import OutlineBuilder
 from llm_gemini import LLMClient
@@ -52,7 +52,7 @@ if provider == "Gemini":
     model_name = st.sidebar.text_input("Model Name", value="gemini-2.0-flash-lite-preview-02-05")
 elif provider == "OpenRouter":
     api_key = st.sidebar.text_input("OpenRouter API Key", value="", type="password")
-    model_name = st.sidebar.text_input("Model Name", value="google/gemini-2.5-flash-lite")
+    model_name = st.sidebar.text_input("Model Name", value="google/gemini-2.0-flash-lite-preview-02-05:free")
 
 if provider != "Local" and not api_key:
     st.sidebar.warning(f"Please enter API Key for {provider} to use LLM features.")
@@ -69,13 +69,13 @@ query = st.text_input("Główny temat / Query", value="fotowoltaika dla firm")
 col1, col2 = st.columns([1, 1])
 
 with col1:
-    st.subheader("Słowa Kluczowe (Dokładnie 15)")
+    st.subheader("Słowa Kluczowe")
     # Default data
-    default_data = [{"keyword": f"fraza {i+1}", "search_volume": 1000} for i in range(15)]
+    default_data = [{"keyword": f"fraza {i+1}", "search_volume": 1000} for i in range(5)]
     
     edited_df = st.data_editor(
         pd.DataFrame(default_data),
-        num_rows="fixed",
+        num_rows="dynamic",
         use_container_width=True,
         hide_index=True,
         column_config={
@@ -102,8 +102,8 @@ async def main_process():
     keywords = [Keyword(keyword=r["keyword"], search_volume=r["search_volume"]) for r in edited_df.to_dict("records")]
     urls = [u.strip() for u in urls_input.split('\n') if u.strip()]
     
-    if len(keywords) != 15:
-        st.error("Lista słów kluczowych musi mieć dokładnie 15 pozycji!")
+    if not keywords:
+        st.error("Podaj przynajmniej jedno słowo kluczowe!")
         return
 
     if not urls:
@@ -150,29 +150,28 @@ async def main_process():
     if outline:
         warnings = []
         
-        # 1. Keywords check (just count for now, logic is upstream)
-        if len(keywords) != 15:
-            warnings.append(f"Nieoczekiwana liczba słów kluczowych: {len(keywords)} (wymagane 15)")
+        # 1. Keywords check
+        if not keywords:
+            warnings.append("Brak słów kluczowych")
             
         # 2. Headings as questions
-        non_question_headings = [item.heading for item in outline.items if not item.heading.strip().endswith("?")]
-        # Using 50% threshold for warning to not be too annoying if one fails
-        if len(non_question_headings) > len(outline.items) * 0.5:
-             warnings.append(f"Większość nagłówków nie jest pytaniami ({len(non_question_headings)}/{len(outline.items)})")
+        non_question_headings = [item.heading for item in outline.outline if not item.heading.strip().endswith("?")] # items -> outline
+        if len(non_question_headings) > len(outline.outline) * 0.5:
+             warnings.append(f"Większość nagłówków nie jest pytaniami ({len(non_question_headings)}/{len(outline.outline)})")
         
         # 3. FAQ Presence
         faq_found = False
-        for item in outline.items:
-            if "często zadawane pytania" in item.heading.lower():
+        for item in outline.outline:
+            if "często zadawane pytania" in item.heading.lower() or "freq" in item.heading.lower():
                 faq_found = True
                 break
         if not faq_found:
             warnings.append("Brak sekcji 'Często zadawane pytania'")
             
-        # 4. Brief length
-        short_briefs = [item.heading for item in outline.items if len(item.brief) < 50]
+        # 4. Content length (brief -> content)
+        short_briefs = [item.heading for item in outline.outline if len(item.content) < 50]
         if short_briefs:
-            warnings.append(f"Zbyt krótkie briefy w {len(short_briefs)} sekcjach")
+            warnings.append(f"Zbyt krótkie treści w {len(short_briefs)} sekcjach")
 
         if warnings:
             with st.expander("Ostrzeżenia dotyczące jakości konspektu", expanded=True):
@@ -222,4 +221,3 @@ async def main_process():
 
 if generate_btn:
     asyncio.run(main_process())
-
