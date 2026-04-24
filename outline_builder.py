@@ -78,7 +78,7 @@ class OutlineBuilder:
             items.append(OutlineItem(
                 level="H2",
                 heading=topic,
-                brief=["Omów temat szeroko.", "Uwzględnij słowa kluczowe."]
+                content="Omów temat szeroko. Uwzględnij słowa kluczowe."
             ))
             
         return Outline(
@@ -86,5 +86,5 @@ class OutlineBuilder:
             meta_description=f"Dowiedz się wszystkiego o {query}. Przeczytaj nasz artykuł.",
             h1_title=f"{query}: Wszystko co musisz wiedzieć",
             lead=f"W tym artykule omówimy {query}...",
-            items=items
+            outline=items
         )
